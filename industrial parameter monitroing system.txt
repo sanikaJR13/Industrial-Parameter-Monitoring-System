@@ -1,0 +1,64 @@
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+#include <DHT.h>
+#define DHT_TYPE DHT11
+const int SW420Pin = 2;
+#define DO_PIN 13  // ESP32's pin GPIO13 connected to DO pin of the flame sensor
+const int BUZZER_PIN = 12;
+const int DHT_PIN = 15;
+LiquidCrystal_I2C lcd(0x27, 16, 4);
+#define DHT_TYPE DHT11
+DHT dht(DHT_PIN, DHT_TYPE);
+
+void setup() 
+{
+  // initialize serial communication
+  Serial.begin(9600);
+  // initialize the ESP32's pin as an input
+  pinMode(DO_PIN, INPUT);
+  pinMode(BUZZER_PIN, OUTPUT);
+  lcd.init(); // Initialize the LCD
+  lcd.backlight(); // Turn on the backlight
+}
+
+void loop() 
+{
+  int flame_state = analogRead(DO_PIN);
+  int sensorValue = digitalRead(SW420Pin);
+  float temperature = dht.readTemperature();
+  //lcd.setCursor(0, 0);
+  //lcd.print("Welcome This is Industrial Parameter System");
+  delay(500);
+  lcd.clear(); // Clear the LCD
+  lcd.setCursor(0, 0); // Set cursor to the first row, first column
+
+  if (sensorValue == HIGH) 
+  {
+    Serial.println("Vibration detected!");
+    lcd.print("Vibrated!"); // Print message on LCD
+  } 
+  else 
+  {
+    Serial.println("No vibration");
+    lcd.print("No Vibration"); // Print message on LCD
+  }
+
+  lcd.setCursor(0, 1);
+  if (flame_state == LOW)
+  {
+    Serial.println("Flame dected => The fire is detected");
+    digitalWrite(BUZZER_PIN, HIGH);
+    lcd.print("Fire detected");
+  }
+  else
+  {
+    Serial.println("NO flame dected => The fire is NOT detected");
+    digitalWrite(BUZZER_PIN, LOW);
+    lcd.print("Fire NOTdetected");
+  }
+
+  lcd.setCursor(0, 3);
+  lcd.print("Temp:");
+  lcd.print(temperature);
+  lcd.print("C");
+}
